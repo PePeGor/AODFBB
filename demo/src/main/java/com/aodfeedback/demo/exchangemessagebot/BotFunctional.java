@@ -3,6 +3,7 @@ package com.aodfeedback.demo.exchangemessagebot;
 import com.aodfeedback.demo.configuration.BotConfig;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.jcl.Log4jLog;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -27,13 +28,16 @@ public class BotFunctional extends TelegramLongPollingBot {
     if(update.hasMessage() && update.getMessage().hasText()){
         String messageText = update.getMessage().getText();
         long chatId = update.getMessage().getChatId();
-        String memberName = update.getMessage().getFrom().getFirstName();
+        //String memberName = update.getMessage().getFrom().getFirstName();
 
         switch (messageText){
             case "/start":
-                startBot(chatId, memberName);
+                startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
+                //startBot(chatId, memberName);
                 break;
-            default: log.info("Unexpected message");
+            default:
+                Log4jLog log = null;
+                log.info("Unexpected message");
         }
     }
     }
@@ -43,16 +47,36 @@ public class BotFunctional extends TelegramLongPollingBot {
         return config.getBotName();
     }
 
-    private void startBot(long chatId, String userName){
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText("Hello, " + userName + "! I'm AoD FeedBack Bot.");
+//    private void startBot(long chatId, String userName){
+//        SendMessage message = new SendMessage();
+//        message.setChatId(chatId);
+//        message.setText("Hello, " + userName + "! I'm AoD FeedBack Bot.");
+//
+//        Log4jLog log = null;
+//        try {
+//            execute(message);
+//            log.info("Replay sent");
+//        } catch (TelegramApiException e){
+//            log.error(e.getMessage());
+//        }
+//    }
 
+    private void startCommandReceived(long chatId, String name) {
+        String answer = "Hi, " + name + ", nice to meet you!" + "\n" +
+                "Enter the currency whose official exchange rate" + "\n" +
+                "you want to know in relation to BYN." + "\n" +
+                "For example: USD";
+        sendMessage(chatId, answer);
+    }
+
+    private void sendMessage(long chatId, String textToSend){
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(String.valueOf(chatId));
+        sendMessage.setText(textToSend);
         try {
-            execute(message);
-            log.info("Replay sent");
-        } catch (TelegramApiException e){
-            log.error(e.getMessage());
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+
         }
     }
 }
