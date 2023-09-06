@@ -1,9 +1,8 @@
 package com.aodfeedback.demo.exchangemessagebot;
 
-import com.aodfeedback.demo.configuration.BotConfig;
 import jakarta.validation.constraints.NotNull;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.jcl.Log4jLog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -11,71 +10,55 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-@Slf4j
+
 @Component
 public class BotFunctional extends TelegramLongPollingBot {
 
-    final BotConfig config;
 
-    public BotFunctional(@Value("${bot.token}") BotConfig config) {
-        super(String.valueOf(config));
-        this.config = config;
+    private static final Logger LOG = LoggerFactory.getLogger(BotFunctional.class);
+
+    public BotFunctional(@Value("${bot.token}") String botToken) {
+        super(botToken);
+
     }
 
     @Override
     public void onUpdateReceived(@NotNull Update update) {
-        if (update.hasMessage() && update.getMessage().hasText()) {
-            String messageText = update.getMessage().getText();
-            long chatId = update.getMessage().getChatId();
-            String memberName = update.getMessage().getFrom().getFirstName();
+        if (!update.hasMessage() || !update.getMessage().hasText()) {
+            return;
+        }
+        String message = update.getMessage().getText();
+        Long chatId = update.getMessage().getChatId();
+        if ("/start".equals(message)) {
+            String userName = update.getMessage().getChat().getUserName();
+            startCommand(chatId, userName);
+        } else {
+            LOG.info("Unexpected message");
+        }
+    }
 
-            switch (messageText) {
-                case "/start":
-                    startCommandReceived(chatId, update.getMessage().getChat().getFirstName());
-                    startBot(chatId, memberName);
-                    break;
-                default:
-                    Log4jLog log = null;
-                    assert false;
-                    log.info("Unexpected message");
-            }
+    private void startCommand(Long chatId, String userName) {
+        var text = " Привет, это телеграм-бот AOD который отвечает на все вашы вопросы";
+
+        var formattedText = String.format(text, userName);
+        sendMessage(chatId, formattedText);
+
+    }
+
+    private void sendMessage(Long chatId, String text) {
+        var chatIdStr = String.valueOf(chatId);
+        var sendMessage = new SendMessage(chatIdStr, text);
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            LOG.error("Ошибка отправки сообщения", e);
         }
     }
 
     @Override
     public String getBotUsername() {
-        return config.getBotName();
+        return "This is AODFeedBack bot!";
     }
 
-    private void startCommandReceived(long chatId, String name) {
-        String answer = "Hi, " + name + ", nice to meet you!" + "\n" +
-                "Enter the currency whose official exchange rate" + "\n" +
-                "you want to know in relation to BYN." + "\n" +
-                "For example: USD";
-        sendMessage(chatId, answer);
-    }
 
-    private void sendMessage(long chatId, String textToSend) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(String.valueOf(chatId));
-        sendMessage.setText(textToSend);
-        try {
-            execute(sendMessage);
-        } catch (TelegramApiException e) {
-
-        }
-    }
-
-    private void startBot(long chatId, String userName) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText("Hello, " + userName + "! I'm a Telegram bot.");
-
-        try {
-            execute(message);
-            log.info("Reply sent");
-        } catch (TelegramApiException e){
-            log.error(e.getMessage());
-        }
-    }
 }
