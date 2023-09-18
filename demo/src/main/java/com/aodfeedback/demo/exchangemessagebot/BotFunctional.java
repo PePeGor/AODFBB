@@ -1,5 +1,6 @@
 package com.aodfeedback.demo.exchangemessagebot;
 
+import ch.qos.logback.core.util.DelayStrategy;
 import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,19 +23,51 @@ public class BotFunctional extends TelegramLongPollingBot {
 
     }
 
+//    @Override
+//    public void onUpdateReceived(@NotNull Update update) {
+//        if (!update.hasMessage() || !update.getMessage().hasText()) {
+//            return;
+//        }
+//        String message = update.getMessage().getText();
+//        Long chatId = update.getMessage().getChatId();
+//
+//        if ("/start".equals(message)) {
+//            String userName = update.getMessage().getChat().getUserName();
+//            startCommand(chatId, userName);
+//        } else {
+//            LOG.info("Unexpected message");
+//        }
+
+//
+//    }
+
     @Override
-    public void onUpdateReceived(@NotNull Update update) {
-        if (!update.hasMessage() || !update.getMessage().hasText()) {
-            return;
-        }
-        String message = update.getMessage().getText();
-        Long chatId = update.getMessage().getChatId();
-        if ("/start".equals(message)) {
-            String userName = update.getMessage().getChat().getUserName();
-            startCommand(chatId, userName);
-        } else {
-            LOG.info("Unexpected message");
-        }
+    public void onUpdateReceived(Update update) {
+
+            LOG.info("message from user id {} && user name is {}",update.getMessage().getFrom().getId(),update.getMessage().getFrom().getUserName());
+            LOG.info("user message.text: {}", update.getMessage().getText());
+            if (update.getMessage().getText().equals("/hello")){
+                LOG.info("HYITA");
+                SendMessage sendMessage = new SendMessage();
+                sendMessage.setText("Hello " + update.getMessage().getFrom().getUserName());
+                sendMessage.setChatId(update.getMessage().getChatId().toString());
+                try {
+                    execute(sendMessage);
+                }catch (TelegramApiException e){
+                    LOG.error("Ваня долбаеб" , e);
+                }
+            }
+            if (update.getMessage().getText().equals("Ваня долбаеб")){
+                SendMessage sendMessage = new SendMessage();
+                sendMessage.setText("Не очень умный ");
+                sendMessage.setChatId(update.getMessage().getChatId().toString());
+                try {
+                    execute(sendMessage);
+                }catch (TelegramApiException e){
+                    LOG.error("Ваня долбаеб" , e);
+                }
+            }
+
     }
 
     private void startCommand(Long chatId, String userName) {
@@ -61,4 +94,20 @@ public class BotFunctional extends TelegramLongPollingBot {
     }
 
 
+//    public void forwardMessage(String chat_id,  int message_id) {
+//        TelegramLongPollingBot bot = new TelegramLongPollingBot("${bot.token}");
+//        try {
+//            SendMessage request = new SendMessage();
+//            request.setChatId(chat_id);
+//            request.setText("Forwarding message from chat " + chat_id);
+//            bot.execute(request);
+//            ForwardMessage forwardMessage = new ForwardMessage();
+//            forwardMessage.setChatId(dest_chat_id);
+//            forwardMessage.setFromChatId(chat_id);
+//            forwardMessage.setMessageId(message_id);
+//            bot.execute(forwardMessage);
+//        } catch (TelegramApiException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }
