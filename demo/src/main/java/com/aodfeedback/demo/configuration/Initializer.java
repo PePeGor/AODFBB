@@ -1,6 +1,5 @@
 package com.aodfeedback.demo.configuration;
 
-import com.aodfeedback.demo.exchangemessagebot.BotFunctional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.ContextRefreshedEvent;

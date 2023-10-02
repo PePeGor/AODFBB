@@ -1,7 +1,6 @@
 package com.aodfeedback.demo.exchangemessagebot;
 
-import ch.qos.logback.core.util.DelayStrategy;
-import jakarta.validation.constraints.NotNull;
+import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +10,8 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.FileWriter;
+import java.io.IOException;
 
 @Component
 public class BotFunctional extends TelegramLongPollingBot {
@@ -23,58 +24,52 @@ public class BotFunctional extends TelegramLongPollingBot {
 
     }
 
-//    @Override
-//    public void onUpdateReceived(@NotNull Update update) {
-//        if (!update.hasMessage() || !update.getMessage().hasText()) {
-//            return;
-//        }
-//        String message = update.getMessage().getText();
-//        Long chatId = update.getMessage().getChatId();
-//
-//        if ("/start".equals(message)) {
-//            String userName = update.getMessage().getChat().getUserName();
-//            startCommand(chatId, userName);
-//        } else {
-//            LOG.info("Unexpected message");
-//        }
-
-//
-//    }
-
+    @SneakyThrows
     @Override
     public void onUpdateReceived(Update update) {
 
-            LOG.info("message from user id {} && user name is {}",update.getMessage().getFrom().getId(),update.getMessage().getFrom().getUserName());
-            LOG.info("user message.text: {}", update.getMessage().getText());
-            if (update.getMessage().getText().equals("/hello")){
-                LOG.info("HYITA");
-                SendMessage sendMessage = new SendMessage();
-                sendMessage.setText("Hello " + update.getMessage().getFrom().getUserName());
-                sendMessage.setChatId(update.getMessage().getChatId().toString());
-                try {
-                    execute(sendMessage);
-                }catch (TelegramApiException e){
-                    LOG.error("Ваня долбаеб" , e);
-                }
+        LOG.info("message from user id {} && user name is {}", update.getMessage().getFrom().getId(), update.getMessage().getFrom().getUserName());
+        LOG.info("user message.text: {}", update.getMessage().getText());
+        if (update.getMessage().getText().equals("/hello")) {
+            LOG.info("HYITA");
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setText("Hello " + update.getMessage().getFrom().getUserName());
+            sendMessage.setChatId(update.getMessage().getChatId().toString());
+            try {
+                execute(sendMessage);
+            } catch (TelegramApiException e) {
+                LOG.error("Ваня долбаеб", e);
             }
-            if (update.getMessage().getText().equals("Ваня долбаеб")){
-                SendMessage sendMessage = new SendMessage();
-                sendMessage.setText("Не очень умный ");
-                sendMessage.setChatId(update.getMessage().getChatId().toString());
-                try {
-                    execute(sendMessage);
-                }catch (TelegramApiException e){
-                    LOG.error("Ваня долбаеб" , e);
-                }
+        }
+        if (update.getMessage().getText().equals("Ваня долбаеб")) {
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setText("Не очень умный ");
+            sendMessage.setChatId(update.getMessage().getChatId().toString());
+            try {
+                execute(sendMessage);
+            } catch (TelegramApiException e) {
+                LOG.error("Ваня долбаеб", e);
             }
+        }
+        if (update.getMessage().getText().equals("/help")) {
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setText("Bot's help commands \n"
+                    + "1. /start \n"
+                    + "2. /hello \n"
+                    + "3. /restart");
+            sendMessage.setChatId(update.getMessage().getChatId().toString());
+            try {
+                execute(sendMessage);
+            } catch (TelegramApiException e) {
+                LOG.error("/help", e);
+            }
+        }
 
-    }
-
-    private void startCommand(Long chatId, String userName) {
-        var text = " Привет, это телеграм-бот AOD который отвечает на все вашы вопросы";
-
-        var formattedText = String.format(text, userName);
-        sendMessage(chatId, formattedText);
+        if (update.hasMessage() && update.getMessage().hasText()) {
+            String userName = update.getMessage().getChat().getUserName();
+            String userID = update.getMessage().getChat().getId().toString();
+            writeUsersToCsvFile(userName, userID);
+        }
 
     }
 
@@ -93,21 +88,20 @@ public class BotFunctional extends TelegramLongPollingBot {
         return "This is AODFeedBack bot!";
     }
 
+    public void writeUsersToCsvFile(String userName, String userID) throws IOException {
 
-//    public void forwardMessage(String chat_id,  int message_id) {
-//        TelegramLongPollingBot bot = new TelegramLongPollingBot("${bot.token}");
-//        try {
-//            SendMessage request = new SendMessage();
-//            request.setChatId(chat_id);
-//            request.setText("Forwarding message from chat " + chat_id);
-//            bot.execute(request);
-//            ForwardMessage forwardMessage = new ForwardMessage();
-//            forwardMessage.setChatId(dest_chat_id);
-//            forwardMessage.setFromChatId(chat_id);
-//            forwardMessage.setMessageId(message_id);
-//            bot.execute(forwardMessage);
-//        } catch (TelegramApiException e) {
-//            e.printStackTrace();
-//        }
-//    }
+        FileWriter writeUser = new FileWriter("telegramBotUsers.csv");
+
+        writeUser.append("userName");
+        writeUser.append(",");
+        writeUser.append("userID");
+        writeUser.append("\n");
+
+        writeUser.append(userName);
+        writeUser.write(",");
+        writeUser.append(userID);
+        writeUser.close();
+
+    }
+
 }
