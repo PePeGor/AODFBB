@@ -24,11 +24,15 @@ repositories {
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.1.2'
+
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	implementation group: 'org.telegram', name: 'telegrambots', version: '6.8.0'
 	implementation group: 'org.apache.logging.log4j', name: 'log4j-jcl', version: '2.20.0'
+	testImplementation group: 'com.h2database', name: 'h2', version: '2.1.214'
+
 }
 
 tasks.named('test') {

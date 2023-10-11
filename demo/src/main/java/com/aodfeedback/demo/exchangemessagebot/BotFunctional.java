@@ -65,22 +65,17 @@ public class BotFunctional extends TelegramLongPollingBot {
             }
         }
 
-        if (update.hasMessage() && update.getMessage().hasText()) {
+        if (update.getMessage().hasText()) {
             String userName = update.getMessage().getChat().getUserName();
             String userID = update.getMessage().getChat().getId().toString();
             writeUsersToCsvFile(userName, userID);
         }
 
-    }
+        SendMessage message = new SendMessage();
+        message.setText("Hello World");
+        message.setChatId(395137825L);
+        execute(message);
 
-    private void sendMessage(Long chatId, String text) {
-        var chatIdStr = String.valueOf(chatId);
-        var sendMessage = new SendMessage(chatIdStr, text);
-        try {
-            execute(sendMessage);
-        } catch (TelegramApiException e) {
-            LOG.error("Ошибка отправки сообщения", e);
-        }
     }
 
     @Override
@@ -90,7 +85,7 @@ public class BotFunctional extends TelegramLongPollingBot {
 
     public void writeUsersToCsvFile(String userName, String userID) throws IOException {
 
-        FileWriter writeUser = new FileWriter("telegramBotUsers.csv");
+        FileWriter writeUser = new FileWriter("telegramBotUsers.csv", true);
 
         writeUser.append("userName");
         writeUser.append(",");
@@ -98,10 +93,13 @@ public class BotFunctional extends TelegramLongPollingBot {
         writeUser.append("\n");
 
         writeUser.append(userName);
-        writeUser.write(",");
+        writeUser.write(" , ");
         writeUser.append(userID);
+
         writeUser.close();
 
     }
+
+
 
 }
