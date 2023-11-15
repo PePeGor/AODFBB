@@ -23,8 +23,6 @@ public class BotFunctional extends TelegramLongPollingBot {
 
     private static final Logger LOG = LoggerFactory.getLogger(BotFunctional.class);
 
-    private final Map<String, String> userChatIds = new HashMap<>();
-
     public BotFunctional(@Value("${bot.token}") String botToken) {
         super(botToken);
 
@@ -51,6 +49,9 @@ public class BotFunctional extends TelegramLongPollingBot {
             forwardMessageToSupportChat(update.getMessage());
             sendResponseToUser(update.getMessage());
         }
+        if(update.hasMessage()){
+            respondToQuestion(update.getMessage());
+        }
 
         if (update.getMessage().getText().equals("/help")) {
             SendMessage sendMessage = new SendMessage();
@@ -72,17 +73,6 @@ public class BotFunctional extends TelegramLongPollingBot {
             writeUsersToCsvFile(userName, userID);
         }
 
-        if (update.hasMessage()) {
-            String userId = update.getMessage().getFrom().getId().toString();
-            String chatId = update.getMessage().getChatId().toString();
-
-            userChatIds.put(userId, chatId);
-
-            if (update.getMessage().isReply() && update.getMessage().getReplyToMessage().hasText()) {
-                String questionUserId = update.getMessage().getReplyToMessage().getFrom().getId().toString();
-                respondToQuestion(update.getMessage(), questionUserId);
-            }
-        }
     }
 
     @Override
@@ -132,21 +122,17 @@ public class BotFunctional extends TelegramLongPollingBot {
         }
     }
 
-    private void respondToQuestion(Message message, String questionUserId) {
+    private void respondToQuestion(Message message) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(message.getFrom().getId());
+        sendMessage.setText("The answer to your question: " + message.getText());
 
-        String questionUserChatId = userChatIds.get(questionUserId);
-
-        if (questionUserChatId != null) {
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setChatId(questionUserChatId);
-            sendMessage.setText("You received a response to your question: " + message.getText());
-
-            try {
-                execute(sendMessage);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
         }
     }
 }
+
 
