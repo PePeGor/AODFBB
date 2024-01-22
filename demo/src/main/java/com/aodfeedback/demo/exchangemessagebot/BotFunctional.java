@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -13,8 +15,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+
 
 @Component
 public class BotFunctional extends TelegramLongPollingBot {
@@ -23,7 +24,7 @@ public class BotFunctional extends TelegramLongPollingBot {
 
     private static final Logger LOG = LoggerFactory.getLogger(BotFunctional.class);
 
-    private final Map<String, String> userChatIds = new HashMap<>();
+
 
     public BotFunctional(@Value("${bot.token}") String botToken) {
         super(botToken);
@@ -37,7 +38,7 @@ public class BotFunctional extends TelegramLongPollingBot {
         LOG.info("message from user id {} && user name is {}", update.getMessage().getFrom().getId(), update.getMessage().getFrom().getUserName());
         LOG.info("user message.text: {}", update.getMessage().getText());
 //        if (update.getMessage().getText().equals("/hello")) {
-//            LOG.info("HYITA");
+//            LOG.info("Trash");
 //            SendMessage sendMessage = new SendMessage();
 //            sendMessage.setText("Hello " + update.getMessage().getFrom().getUserName());
 //            sendMessage.setChatId(update.getMessage().getChatId().toString());
@@ -47,9 +48,13 @@ public class BotFunctional extends TelegramLongPollingBot {
 //                LOG.error("Ваня долбаеб", e);
 //            }
 //        }
+
         if (update.hasMessage()) {
             forwardMessageToSupportChat(update.getMessage());
             sendResponseToUser(update.getMessage());
+        }
+        if(update.hasMessage()){
+            respondToQuestion(update.getMessage());
         }
 
         if (update.getMessage().getText().equals("/help")) {
@@ -70,18 +75,6 @@ public class BotFunctional extends TelegramLongPollingBot {
             String userName = update.getMessage().getChat().getUserName();
             String userID = update.getMessage().getChat().getId().toString();
             writeUsersToCsvFile(userName, userID);
-        }
-
-        if (update.hasMessage()) {
-            String userId = update.getMessage().getFrom().getId().toString();
-            String chatId = update.getMessage().getChatId().toString();
-
-            userChatIds.put(userId, chatId);
-
-            if (update.getMessage().isReply() && update.getMessage().getReplyToMessage().hasText()) {
-                String questionUserId = update.getMessage().getReplyToMessage().getFrom().getId().toString();
-                respondToQuestion(update.getMessage(), questionUserId);
-            }
         }
     }
 
@@ -132,21 +125,29 @@ public class BotFunctional extends TelegramLongPollingBot {
         }
     }
 
-    private void respondToQuestion(Message message, String questionUserId) {
+    private void respondToQuestion(Message message) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(message.getFrom().getId());
+        sendMessage.setText("The answer to your question: " + message.getText());
 
-        String questionUserChatId = userChatIds.get(questionUserId);
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
 
-        if (questionUserChatId != null) {
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setChatId(questionUserChatId);
-            sendMessage.setText("You received a response to your question: " + message.getText());
-
-            try {
-                execute(sendMessage);
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
+    @PostMapping("/forwardResponse")
+    public void forwardResponseFromTechSupport(@RequestBody String response, long userId) {
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setChatId(String.valueOf(userId));
+        sendMessage.setText(response);
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
         }
     }
 }
+
 
